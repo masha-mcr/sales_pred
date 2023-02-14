@@ -1,0 +1,35 @@
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sales_pred_filiankova"
+version = "1.0.8"
+description = "test package upload"
+readme = "README.md"
+authors = [{ name = "Maryia Filiankova", email = "maryia.filenkova@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "shap",
+    "xgboost",
+    "scikit-learn",
+    "hyperopt",
+    "matplotlib",
+    "seaborn",
+    "boruta",
+    "category_encoders",
+    "tqdm",
+]
+requires-python = ">=3.7"
+
+
+
+
+
