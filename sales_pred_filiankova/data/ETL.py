@@ -24,7 +24,7 @@ def etl(src_path: os.PathLike, dst_path: os.PathLike) -> None:
     test['item_id'].replace(items_mapping, inplace=True)
     test['shop_id'].replace(shops_mapping, inplace=True)
 
-    sales = sales.groupby(['date', 'date_block_num', 'shop_id', 'item_id']).agg({'item_price': 'median', 'item_cnt_day': 'median'}).reset_index()
+    sales = sales.groupby(['date', 'date_block_num', 'shop_id', 'item_id']).agg({'item_price': 'median', 'item_cnt_day': 'sum'}).reset_index()
 
     os.mkdir(dst_path)
     sales.to_csv(os.path.join(dst_path, 'sales_train.csv'), index=False, date_format='%d.%m.%Y')

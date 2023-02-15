@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sales_pred_filiankova"
-version = "1.0.8"
+version = "1.0.11"
 description = "test package upload"
 readme = "README.md"
 authors = [{ name = "Maryia Filiankova", email = "maryia.filenkova@gmail.com" }]
@@ -15,17 +15,17 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "pandas",
-    "numpy",
-    "shap",
-    "xgboost",
-    "scikit-learn",
-    "hyperopt",
-    "matplotlib",
-    "seaborn",
-    "boruta",
-    "category_encoders",
-    "tqdm",
+    "pandas>=1.5.3",
+    "numpy>=1.23.0",
+    "shap>=0.41.0",
+    "xgboost>=1.7.0",
+    "scikit-learn>=1.2.0",
+    "hyperopt>=0.2.7",
+    "matplotlib>=3.6.3",
+    "seaborn>=0.12.2",
+    "boruta>=0.3",
+    "category_encoders>=2.6.0",
+    "tqdm>=4.64.0",
 ]
 requires-python = ">=3.7"
 

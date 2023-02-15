@@ -64,22 +64,22 @@ class TargetTransformer(BaseEstimator, TransformerMixin):
 
 
 class OutlierRemover(BaseEstimator, TransformerMixin):
-    def __init__(self,  target, prob=0.03):
+    def __init__(self,  target='item_cnt_month', prob=0.03):
         self._prob = prob
         self._threshold = None
         self._target = target
 
     def fit(self, X, y=None):
-        self._threshold = np.mean(X['target']) / self._prob
+        self._threshold = np.mean(X[self._target]) / self._prob
         return self
 
     def fit_transform(self, X, y=None):
-        self._threshold = np.mean(X['target']) / self._prob
-        X = X[X['target'] < self._threshold]
+        self._threshold = np.mean(X[self._target]) / self._prob
+        X = X[X[self._target] < self._threshold]
         return X
 
     def transform(self, X, y=None):
-        X = X[X['target'] < self._threshold]
+        X = X[X[self._target] < self._threshold]
         return X
 
 
