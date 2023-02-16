@@ -118,7 +118,7 @@ class GetItemSalesLag(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         date_block = X['date_block_num'].values[0]
         old_shape = X.shape[0]
-        X = X.merge(self._lag_data, on=['item_id', 'shop_id'])  # , how='left'
+        X = X.merge(self._lag_data, on=['item_id', 'shop_id'], how='left')  #
         assert old_shape == X.shape[0]
         X = X.fillna(0)
 
@@ -142,7 +142,7 @@ class GetPriceLag(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         date_block = X['date_block_num'].values[0]
         old_shape = X.shape[0]
-        X = X.merge(self._lag_data, on=['item_id', 'shop_id'])  # , how='left'
+        X = X.merge(self._lag_data, on=['item_id', 'shop_id'], how='left')  #
         assert old_shape == X.shape[0]
         X = X.fillna(0)
         for lag in self._lags:
@@ -166,7 +166,7 @@ class GetTotalSalesLag(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         date_block = X['date_block_num'].values[0]
         old_shape = X.shape[0]
-        X = X.merge(self._lag_data, on=['shop_id'])  # , how='left'
+        X = X.merge(self._lag_data, on=['shop_id'], how='left')  #
         assert X.shape[0] == old_shape
         X = X.fillna(0)
         for lag in self._lags:
@@ -214,7 +214,7 @@ class GetItemSpreadLag(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         date_block = X['date_block_num'].values[0]
         old_shape = X.shape[0]
-        X = X.merge(self._lag_data, on=['item_id'])  # , how='left'
+        X = X.merge(self._lag_data, on=['item_id'], how='left')  #
         assert X.shape[0] == old_shape
         X = X.fillna(0)
         for lag in self._lags:
@@ -280,17 +280,22 @@ class FeatureExtractor:
     def extract_features(self, train_data: pd.DataFrame=None, val_data: pd.DataFrame=None,
                                test_data: pd.DataFrame=None) -> (pd.DataFrame, pd.DataFrame):
         train, val, test = None, None, None
+        output = []
         if train_data is not None:
             train = self._extraction_pipeline_train.fit_transform(train_data)
             train_per_month = [
                 self._lag_extraction_pipeline.fit_transform(train.loc[train['date_block_num'] == block].copy())
                 for block in tqdm(train['date_block_num'].unique(), desc='Lag features extraction')]
             train = pd.concat(train_per_month, axis=0)
+            output.append(train)
         if val_data is not None:
             val = self._extraction_pipeline_train.transform(val_data)
             val = self._lag_extraction_pipeline.transform(val)
+            output.append(val)
         if test_data is not None:
             test = self._extraction_pipeline_test.fit_transform(test_data)
             test = self._lag_extraction_pipeline.transform(test)
-        return (df for df in (train, val, test) if df is not None)
+            output.append(test)
+
+        return output
 

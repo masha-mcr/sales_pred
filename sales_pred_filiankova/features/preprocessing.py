@@ -31,10 +31,9 @@ class FeatureScaler(BaseEstimator, TransformerMixin):
 class TargetEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, smoothing=1.0, min_samples_leaf=1):
         self._encoder = ce.TargetEncoder(min_samples_leaf=min_samples_leaf, smoothing=smoothing)
-        self._cat_cols = None
+        self._cat_cols = ['shop_id', 'city_id', 'item_id', 'item_category_id', 'item_global_category_id']
 
     def fit(self, X, y=None):
-        self._cat_cols = X.select_dtypes(include='int64').columns
         X[self._cat_cols] = X[self._cat_cols].astype(object)
         self._encoder = self._encoder.fit(X[self._cat_cols], y)
         return self
