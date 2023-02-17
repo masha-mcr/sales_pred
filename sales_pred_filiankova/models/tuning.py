@@ -24,8 +24,8 @@ DEFAULT_RFR_SPACE = {
         'max_depth': hp.quniform('max_depth', 3, 20, 1),
         'min_samples_split': hp.quniform('min_samples_split', 2, 100, 1),
         'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 20, 1),
-        'max_features': hp.quniform('max_features', 0.1, 0.99, 0.1),
-        'max_samples': hp.quniform('max_samples', 0.1, 0.99, 0.1)
+        'max_features': hp.quniform('max_features', 0.1, 0.98, 0.1),
+        'max_samples': hp.quniform('max_samples', 0.1, 0.98, 0.1)
     }
 
 
@@ -60,7 +60,7 @@ def rfr_score(params, **data):
                                   max_samples=params['max_samples'],
                                   )
 
-    model.fit(data['t_x'], data['t_y'])
+    model.fit(data['t_x'], data['t_y'].ravel())
     pred = model.predict(data['v_x'])
     mse = mean_squared_error(data['v_y'], pred, squared=False)
     return {'loss': mse, 'status': STATUS_OK, 'model': model}

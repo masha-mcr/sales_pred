@@ -63,7 +63,7 @@ class TargetTransformer(BaseEstimator, TransformerMixin):
 
 
 class OutlierRemover(BaseEstimator, TransformerMixin):
-    def __init__(self,  target='item_cnt_month', prob=0.03):
+    def __init__(self, target='item_cnt_month', prob=0.03):
         self._prob = prob
         self._threshold = None
         self._target = target
@@ -82,28 +82,37 @@ class OutlierRemover(BaseEstimator, TransformerMixin):
         return X
 
 
-def get_preprocessing_pipeline(steps_only: bool = False, enc_smoothing=1.0, enc_min_samples_leaf=1) -> Pipeline:
-    steps = [('scaler', FeatureScaler()),
-             ('encoder', TargetEncoder(enc_smoothing, enc_min_samples_leaf))]
-    if steps_only:
-        return steps
-    else:
-        return Pipeline(steps=steps)
+class Preprocessor:
+    def __init__(self, target_col, outlier_prob=0.03, **encoder_params):
+        self.target_transformer = TargetTransformer()
+        self._outlier_remover = OutlierRemover(prob=outlier_prob, target=target_col)
+        self._target_col = target_col
+        self._feature_prep_pipeline = Pipeline(steps=[('scaler', FeatureScaler()),
+                                                      ('encoder', TargetEncoder(**encoder_params))])
 
+    def preprocess_data(self, train_data=None, val_data=None, test_data=None):
 
-def preprocess_data(train_x: pd.DataFrame, train_y: pd.DataFrame,
-                    val_x: pd.DataFrame, val_y: pd.DataFrame,
-                    outlier_prob=0.03, enc_smoothing=1.0, enc_min_samples_leaf=1) -> (pd.DataFrame, pd.DataFrame,
-                                                                                      pd.DataFrame, pd.DataFrame):
+        output = []
+        if train_data is not None:
+            train = self._outlier_remover.fit_transform(train_data)
+            train_y = train[self._target_col]
+            train_x = train.drop([self._target_col])
+            train_y = self.target_transformer.fit_transform(train_y.values.reshape(-1, 1))
+            train_x = self._feature_prep_pipeline.fit_transform(train_x, train_y)
+            output.append(train_x)
+            output.append(train_y)
+        if val_data is not None:
+            val = self._outlier_remover.transform(val_data)
+            val_y = val[self._target_col]
+            val_x = val.drop([self._target_col])
+            val_y = self.target_transformer.transform(val_y.values.reshape(-1, 1))
+            val_x = self._feature_prep_pipeline.transform(val_x)
+            output.append(val_x)
+            output.append(val_y)
+        if test_data is not None:
+            test_x = self._feature_prep_pipeline.transform(test_data)
+            output.append(test_x)
 
-    outlier_remover = OutlierRemover(prob=outlier_prob)
-    train_x, train_y = outlier_remover.fit_transform(train_x, train_y)
-    val_x, val_y = outlier_remover.transform(val_x, val_y)
-
-    prep_pipeline = get_preprocessing_pipeline()
-    train_x = prep_pipeline.fit_transform(train_x, train_y)
-    val_x = prep_pipeline.transform(val_x)
-
-    return train_x, train_y, val_x, val_y
+        return output
 
 

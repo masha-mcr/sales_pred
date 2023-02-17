@@ -10,7 +10,7 @@ def etl(src_path: os.PathLike, dst_path: os.PathLike) -> None:
     item_cat = pd.read_csv(os.path.join(src_path, 'item_categories.csv'))
     test = pd.read_csv(os.path.join(src_path, 'test.csv'))
     sales = sales[sales['item_price'] > 0]
-    sales = sales[sales['item_cnt_day'] > 0]
+#    sales = sales[sales['item_cnt_day'] >= 0]
 
     items['item_name'] = items['item_name'].apply(lambda name: re.sub('^[\\\/^.*\[\]~!@#$%^&()_+={}|\:;“’<,>?฿]+', '', name))
     shops['shop_name'] = shops['shop_name'].apply(lambda name: re.sub('^[\\\/^.*\[\]~!@#$%^&()_+={}|\:;“’<,>?฿]+', '', name))

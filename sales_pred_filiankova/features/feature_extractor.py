@@ -274,7 +274,6 @@ class FeatureExtractor:
 
     def extract_features(self, train_data: pd.DataFrame=None, val_data: pd.DataFrame=None,
                                test_data: pd.DataFrame=None) -> (pd.DataFrame, pd.DataFrame):
-        train, val, test = None, None, None
         output = []
         if train_data is not None:
             train = self._extraction_pipeline_train.fit_transform(train_data)
