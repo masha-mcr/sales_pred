@@ -235,6 +235,20 @@ class GetSumOfSales(BaseEstimator, TransformerMixin):
             cols_to_sum = [str(int(date_block - i)) for i in range(1, lag + 1) if date_block - i >= 0]
             X[f'sum_sales_lag_{lag}'] = X.loc[:, cols_to_sum].sum(axis=1)
 
+        return X
+
+
+class GetNonZeroMonths(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+    def fit(self, X, y=None ):
+        return self
+    def transform(self, X, y=None):
+        date_block = X['date_block_num'].values[0]
+        prev_months = X[[str(i) for i in range(0, date_block)]]
+        X['non_zero_months'] = np.count_nonzero(prev_months, axis=1)
+        X['mean_sales_when_sold'] = prev_months.apply(lambda row: row[row > 0].mean(), axis=1)
+        X['mean_sales_when_sold'].fillna(0, inplace=True)
         X.drop(['date_block_num'], axis=1, inplace=True)
         X.drop([str(i) for i in range(34)], axis=1, inplace=True)
         return X
@@ -267,7 +281,8 @@ class FeatureExtractor:
             (
                 "past_month_item_sales",
                 GetItemSalesLag(lags=[1, 2, 3, 6, 12], lag_data=self._lag_datasets['item_sales'])),
-            ("sum_of_sales", GetSumOfSales(lags=[6, 12]))
+            ("sum_of_sales", GetSumOfSales(lags=[6, 12])),
+            ("non-zero months", GetNonZeroMonths())
         ]
 
         return Pipeline(steps=lag_extraction_steps)

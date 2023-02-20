@@ -14,17 +14,11 @@ class FeatureScaler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         self._num_cols = list(set(X.select_dtypes(include='float64').columns) - {'month_sin', 'month_cos'})
-        self._feat_scaler = self._feat_scaler.fit(X[self._num_cols])
+        self._feat_scaler = self._feat_scaler.fit(X.loc[:, self._num_cols])
         return self
 
     def transform(self, X, y=None):
-        X[self._num_cols] = self._feat_scaler.transform(X[self._num_cols])
-        return X
-
-    def fit_transform(self, X, y=None):
-        self._num_cols = list(set(X.select_dtypes(include='float64').columns) - {'month_sin', 'month_cos'})
-        self._feat_scaler = self._feat_scaler.fit(X[self._num_cols])
-        X[self._num_cols] = self._feat_scaler.transform(X[self._num_cols])
+        X.loc[:, self._num_cols] = self._feat_scaler.transform(X.loc[:, self._num_cols])
         return X
 
 
@@ -34,12 +28,12 @@ class TargetEncoder(BaseEstimator, TransformerMixin):
         self._cat_cols = ['shop_id', 'city_id', 'item_id', 'item_category_id', 'item_global_category_id']
 
     def fit(self, X, y=None):
-        X[self._cat_cols] = X[self._cat_cols].astype(object)
-        self._encoder = self._encoder.fit(X[self._cat_cols], y)
+        X.loc[:, self._cat_cols] = X.loc[:, self._cat_cols].astype(object)
+        self._encoder = self._encoder.fit(X.loc[:, self._cat_cols], y)
         return self
 
     def transform(self, X, y=None):
-        X[self._cat_cols] = self._encoder.transform(X[self._cat_cols])
+        X.loc[:, self._cat_cols] = self._encoder.transform(X.loc[:, self._cat_cols])
         return X
 
 
@@ -49,7 +43,10 @@ class TargetTransformer(BaseEstimator, TransformerMixin):
         self._no_log = no_log
 
     def fit(self, X, y=None):
-        self._scaler = self._scaler.fit(np.log(X))
+        if self._no_log:
+            self._scaler = self._scaler.fit(X)
+        else:
+            self._scaler = self._scaler.fit(np.log(X))
         return self
 
     def transform(self, X, y=None):
@@ -100,22 +97,21 @@ class Preprocessor:
         output = []
         if train_data is not None:
             train_x, train_y = train_data
-            print('before outliers')
             train_x, train_y = self._outlier_remover.fit_transform(train_x, train_y)
-            print('before TT')
             train_y_transformed = self.target_transformer.fit_transform(train_y.values.reshape(-1, 1))
-            print('before prep')
             train_x = self._feature_prep_pipeline.fit_transform(train_x, train_y)
             output.append(train_x)
-            output.append(train_y_transformed)
+            output.append(pd.DataFrame(train_y_transformed))
             output.append(pd.DataFrame(train_y))
         if val_data is not None:
             val_x, val_y = val_data
             val_x, val_y = self._outlier_remover.transform(val_x, val_y)
             val_y_transformed = self.target_transformer.transform(val_y.values.reshape(-1, 1))
+            assert (val_x.columns == train_x.columns).all()
+            assert type(val_x) == type(train_x)
             val_x = self._feature_prep_pipeline.transform(val_x)
             output.append(val_x)
-            output.append(val_y_transformed)
+            output.append(pd.DataFrame(val_y_transformed))
             output.append(pd.DataFrame(val_y))
         if test_data is not None:
             test_x = self._feature_prep_pipeline.transform(test_data)

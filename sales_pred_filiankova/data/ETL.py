@@ -12,7 +12,7 @@ def etl(src_path: os.PathLike, dst_path: os.PathLike) -> None:
     item_cat = pd.read_csv(os.path.join(src_path, 'item_categories.csv'))
     test = pd.read_csv(os.path.join(src_path, 'test.csv'))
     sales = sales[sales['item_price'] > 0]
-    sales = sales[sales['item_cnt_day'] >= 0]
+    sales = sales[sales['item_cnt_day'] > 0]
 
     items['item_name'] = items['item_name'].apply(lambda name: re.sub('^[\\\/^.*\[\]~!@#$%^&()_+={}|\:;“’<,>?฿]+', '', name))
     shops['shop_name'] = shops['shop_name'].apply(lambda name: re.sub('^[\\\/^.*\[\]~!@#$%^&()_+={}|\:;“’<,>?฿]+', '', name))
@@ -33,7 +33,7 @@ def etl(src_path: os.PathLike, dst_path: os.PathLike) -> None:
     shops.to_csv(os.path.join(dst_path, 'shops.csv'), index=False)
     items.to_csv(os.path.join(dst_path, 'items.csv'), index=False)
     item_cat.to_csv(os.path.join(dst_path, 'item_categories.csv'), index=False)
-    test.to_csv(os.path.join(dst_path, 'test.csv'))
+    test.to_csv(os.path.join(dst_path, 'test.csv'), index=False)
 
 
 def resample_sales(sales, shops, items,
@@ -46,9 +46,10 @@ def resample_sales(sales, shops, items,
         dates = list(map(lambda year, month, day: date(year, month, day), years, months, days))
         return dates
 
-    possible_shop_item_pairs = shops.merge(items, how='cross')
+    shop_item_merged = shops.merge(items, how='cross')
+    possible_shop_item_pairs = all_shop_item_pairs = set(zip(shop_item_merged['shop_id'], shop_item_merged['item_id']))
     real_shop_item_pairs = set(zip(sales['shop_id'], sales['item_id']))
-    artificial_zero_sales_pairs = np.array([*( possible_shop_item_pairs - real_shop_item_pairs)])
+    artificial_zero_sales_pairs = np.array([*(possible_shop_item_pairs - real_shop_item_pairs)])
 
     price_per_category = sales.merge(items, on='item_id').groupby(['item_category_id']).agg(
         {'item_price': 'median'}).reset_index()
@@ -64,6 +65,7 @@ def resample_sales(sales, shops, items,
     zero_sales = zero_sales.merge(items, on='item_id').merge(price_per_category, on='item_category_id')
     zero_sales['item_cnt_day'] = 0
     zero_sales = zero_sales[sales.columns]
+    zero_sales = zero_sales[zero_sales['date_block_num'] < 34]
 
     big_targets = sales[sales['item_cnt_day'] > sales['item_cnt_day'].quantile(big_target_thres)]
     big_target_shops = big_targets['shop_id'].unique()
@@ -82,6 +84,7 @@ def resample_sales(sales, shops, items,
 
     new_sales = pd.concat([sales, zero_sales, big_sales])
     new_sales = new_sales.drop(new_sales[new_sales['item_cnt_day'] == 1.0].sample(frac=drop_ones_frac).index)
+    new_sales = new_sales[new_sales['date_block_num'] < 34]
 
     return new_sales
 
