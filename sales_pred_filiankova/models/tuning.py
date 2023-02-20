@@ -24,8 +24,8 @@ DEFAULT_RFR_SPACE = {
         'max_depth': hp.quniform('max_depth', 3, 20, 1),
         'min_samples_split': hp.quniform('min_samples_split', 2, 100, 1),
         'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 20, 1),
-        'max_features': hp.quniform('max_features', 0.1, 0.98, 0.1),
-        'max_samples': hp.quniform('max_samples', 0.1, 0.98, 0.1)
+        'max_features': hp.quniform('max_features', 0.1, 0.9, 0.1),
+        'max_samples': hp.quniform('max_samples', 0.1, 0.9, 0.1)
     }
 
 
@@ -56,8 +56,8 @@ def rfr_score(params, **data):
                                   max_depth=int(params['max_depth']),
                                   min_samples_split=int(params['min_samples_split']),
                                   min_samples_leaf=int(params['min_samples_leaf']),
-                                  max_features=params['max_features'],
-                                  max_samples=params['max_samples'],
+                                  max_features=params['max_features'] if params['max_features'] < 0.99 else 1,
+                                  max_samples=params['max_samples'] if params['max_samples'] < 0.99 else 1,
                                   )
 
     model.fit(data['t_x'], data['t_y'].ravel())

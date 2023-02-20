@@ -38,7 +38,7 @@ class ShopItemAge(BaseEstimator, TransformerMixin):
         assert all(X['item_age_month'] >= 0)
         assert not X.isna().any().any()
 
-        # print('Item and shop ages calculation complete')
+        print('Item and shop ages calculation complete')
         return X
 
 
@@ -54,7 +54,7 @@ class MonthlySales(BaseEstimator, TransformerMixin):
                                                                      'date': 'max',
                                                                      }).reset_index().rename(
             {'item_cnt_day': 'item_cnt_month'}, axis=1)
-        # print('Monthly sales calculated')
+        print('Monthly sales calculated')
         return X
 
 
@@ -69,7 +69,7 @@ class MonthlySalesTest(BaseEstimator, TransformerMixin):
         X['date_block_num'] = 34
         X['date'] = date(2015, 34 % 12 + 1, 28)
         X['date'] = pd.to_datetime(X['date'], format="%Y-%m-%d")
-        # print('Monthly sales calculated')
+        print('Monthly sales calculated')
         return X
 
 
@@ -95,7 +95,7 @@ class MergeTables(BaseEstimator, TransformerMixin):
         assert not X.isna().any().any()
 
         X.drop([col for col in X.columns if X[col].dtype == object], axis=1, inplace=True)
-        # print('Merging stage complete')
+        print('Merging stage complete')
         return X
 
 

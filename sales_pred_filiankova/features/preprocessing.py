@@ -44,21 +44,24 @@ class TargetEncoder(BaseEstimator, TransformerMixin):
 
 
 class TargetTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self):
+    def __init__(self, no_log=False):
         self._scaler = StandardScaler()
+        self._no_log = no_log
 
     def fit(self, X, y=None):
         self._scaler = self._scaler.fit(np.log(X))
         return self
 
     def transform(self, X, y=None):
-        X = np.log(X)
+        if not self._no_log:
+            X = np.log(X)
         X = self._scaler.transform(X)
         return X
 
     def inverse_transform(self, X, y=None):
         X = self._scaler.inverse_transform(X)
-        X = np.exp(X)
+        if not self._no_log:
+            X = np.exp(X)
         return X
 
 
@@ -69,22 +72,24 @@ class OutlierRemover(BaseEstimator, TransformerMixin):
         self._target = target
 
     def fit(self, X, y=None):
-        self._threshold = np.mean(X[self._target]) / self._prob
+        self._threshold = np.mean(y) / self._prob
         return self
 
     def fit_transform(self, X, y=None):
-        self._threshold = np.mean(X[self._target]) / self._prob
-        X = X[X[self._target] < self._threshold]
-        return X
+        self._threshold = np.mean(y) / self._prob
+        X = X[y < self._threshold]
+        y = y[y < self._threshold]
+        return X, y
 
     def transform(self, X, y=None):
-        X = X[X[self._target] < self._threshold]
-        return X
+        X = X[y < self._threshold]
+        y = y[y < self._threshold]
+        return X, y
 
 
 class Preprocessor:
-    def __init__(self, target_col, outlier_prob=0.03, **encoder_params):
-        self.target_transformer = TargetTransformer()
+    def __init__(self, target_col, no_log_target=False, outlier_prob=0.03, **encoder_params):
+        self.target_transformer = TargetTransformer(no_log=no_log_target)
         self._outlier_remover = OutlierRemover(prob=outlier_prob, target=target_col)
         self._target_col = target_col
         self._feature_prep_pipeline = Pipeline(steps=[('scaler', FeatureScaler()),
@@ -94,25 +99,26 @@ class Preprocessor:
 
         output = []
         if train_data is not None:
-            train = self._outlier_remover.fit_transform(train_data)
-            train_y = train[self._target_col]
-            train_x = train.drop([self._target_col])
-            train_y = self.target_transformer.fit_transform(train_y.values.reshape(-1, 1))
+            train_x, train_y = train_data
+            print('before outliers')
+            train_x, train_y = self._outlier_remover.fit_transform(train_x, train_y)
+            print('before TT')
+            train_y_transformed = self.target_transformer.fit_transform(train_y.values.reshape(-1, 1))
+            print('before prep')
             train_x = self._feature_prep_pipeline.fit_transform(train_x, train_y)
             output.append(train_x)
-            output.append(train_y)
+            output.append(train_y_transformed)
+            output.append(pd.DataFrame(train_y))
         if val_data is not None:
-            val = self._outlier_remover.transform(val_data)
-            val_y = val[self._target_col]
-            val_x = val.drop([self._target_col])
-            val_y = self.target_transformer.transform(val_y.values.reshape(-1, 1))
+            val_x, val_y = val_data
+            val_x, val_y = self._outlier_remover.transform(val_x, val_y)
+            val_y_transformed = self.target_transformer.transform(val_y.values.reshape(-1, 1))
             val_x = self._feature_prep_pipeline.transform(val_x)
             output.append(val_x)
-            output.append(val_y)
+            output.append(val_y_transformed)
+            output.append(pd.DataFrame(val_y))
         if test_data is not None:
             test_x = self._feature_prep_pipeline.transform(test_data)
             output.append(test_x)
 
         return output
-
-
