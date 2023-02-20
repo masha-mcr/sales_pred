@@ -15,12 +15,11 @@ def impurity_decrease_importance(model, col_names):
     return model.feature_importances_, fig
 
 
-def permutations_importance(model, val_x, val_y):
+def permutations_importance(model, val_x, val_y, n_repeats):
     r = permutation_importance(model, val_x, val_y,
                                n_repeats=30,
                                random_state=1001)
     fig, ax = plt.subplots()
-    fig.set_size_inches(7, 5)
     pd.Series(r.importances_mean, index=val_x.columns).plot.bar(yerr=r.importances_std, ax=ax)
     ax.set_title("Feature importances using Permutations")
     fig.tight_layout()

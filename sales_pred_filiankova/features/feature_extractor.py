@@ -247,6 +247,7 @@ class GetNonZeroMonths(BaseEstimator, TransformerMixin):
         date_block = X['date_block_num'].values[0]
         prev_months = X[[str(i) for i in range(0, date_block)]]
         X['non_zero_months'] = np.count_nonzero(prev_months, axis=1)
+        X['non_zero_months'] = X['non_zero_months'].astype(float)
         X['mean_sales_when_sold'] = prev_months.apply(lambda row: row[row > 0].mean(), axis=1)
         X['mean_sales_when_sold'].fillna(0, inplace=True)
         X.drop(['date_block_num'], axis=1, inplace=True)

@@ -14,7 +14,7 @@ class ShapExplainer:
         return self._shap_values
 
     def summary_plot(self, max_display=20):
-        shap.summary_plot(self._shap_values, self._data, feature_names=self._data.columns,  max_display=max_display)
+        return shap.summary_plot(self._shap_values, self._data, feature_names=self._data.columns,  max_display=max_display)
 
     def plot_prediction(self, data):
         error_shap_value = self._explainer.shap_values(data)
