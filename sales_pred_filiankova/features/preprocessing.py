@@ -85,12 +85,16 @@ class OutlierRemover(BaseEstimator, TransformerMixin):
 
 
 class Preprocessor:
-    def __init__(self, target_col, no_log_target=False, outlier_prob=0.03, **encoder_params):
+    def __init__(self, target_col, no_log_target=False, outlier_prob=0.03, keep_cat=False, **encoder_params):
         self.target_transformer = TargetTransformer(no_log=no_log_target)
         self._outlier_remover = OutlierRemover(prob=outlier_prob, target=target_col)
         self._target_col = target_col
-        self._feature_prep_pipeline = Pipeline(steps=[('scaler', FeatureScaler()),
-                                                      ('encoder', TargetEncoder(**encoder_params))])
+
+        preprocessing_steps = [('scaler', FeatureScaler())]
+        if not keep_cat:
+            preprocessing_steps.append(('encoder', TargetEncoder(**encoder_params)))
+
+        self._feature_prep_pipeline = Pipeline(steps=preprocessing_steps)
 
     def preprocess_data(self, train_data=None, val_data=None, test_data=None):
 
